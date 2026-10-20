@@ -3,25 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>課堂看板 · 華爾街預言家</title>
-  <meta name="description" content="16 週股市預測挑戰：每週結算結果、全班靶心、前三名與排行榜。">
+  <title data-i18n="d.title">課堂看板 · 華爾街預言家</title>
+  <meta name="description" content="16 週股市預測挑戰：每週結算結果、全班靶心、前三名與排行榜。 · Class dashboard for the 16-week market prediction challenge.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body class="dash">
   <header class="dash-bar">
-    <div class="dash-brand"><span aria-hidden="true">🎯</span> 華爾街預言家 <span class="muted">· 課堂看板</span></div>
-    <nav class="week-nav" aria-label="切換週次">
-      <button class="icon-btn" id="prev-week" aria-label="上一週">‹</button>
-      <select id="week-select" aria-label="選擇週次"></select>
-      <button class="icon-btn" id="next-week" aria-label="下一週">›</button>
+    <div class="dash-brand"><span aria-hidden="true">🎯</span> <span data-i18n="app.name">華爾街預言家</span> <span class="muted">· <span data-i18n="d.brand">課堂看板</span></span></div>
+    <nav class="week-nav" data-i18n-aria="d.weekNav">
+      <button class="icon-btn" id="prev-week" data-i18n-aria="d.prev">‹</button>
+      <select id="week-select" data-i18n-aria="d.select"></select>
+      <button class="icon-btn" id="next-week" data-i18n-aria="d.next">›</button>
     </nav>
     <div class="dash-actions">
       <span class="muted small" id="updated"></span>
-      <button class="icon-btn" id="refresh" aria-label="重新整理" title="重新整理">↻</button>
-      <button class="icon-btn" id="theme" aria-label="切換深淺色" title="切換深淺色">◐</button>
-      <button class="icon-btn" id="fullscreen" aria-label="全螢幕" title="全螢幕（F）">⛶</button>
+      <div class="lang-toggle on-dark"></div>
+      <button class="icon-btn" id="refresh" data-i18n-aria="d.refresh" data-i18n-title="d.refresh">↻</button>
+      <button class="icon-btn" id="theme" data-i18n-aria="d.theme" data-i18n-title="d.theme">◐</button>
+      <button class="icon-btn" id="fullscreen" data-i18n-aria="d.fullscreen" data-i18n-title="d.fullscreen">⛶</button>
     </div>
   </header>
 
@@ -31,14 +32,14 @@
     <section class="dash-row two">
       <article class="card">
         <div class="card-head">
-          <h2 id="target-title">全班靶心</h2>
-          <label class="toggle"><input type="checkbox" id="show-names"> 顯示所有姓名</label>
+          <h2 id="target-title"></h2>
+          <label class="toggle"><input type="checkbox" id="show-names"> <span data-i18n="d.showNames"></span></label>
         </div>
         <p class="muted small" id="target-note"></p>
         <div class="target-wrap dash-target" id="class-target"></div>
       </article>
       <article class="card">
-        <div class="card-head"><h2 id="podium-title">本週前三名</h2></div>
+        <div class="card-head"><h2 id="podium-title"></h2></div>
         <div id="podium" class="dash-podium"></div>
       </article>
     </section>
@@ -46,8 +47,8 @@
     <section class="dash-row two">
       <article class="card">
         <div class="card-head">
-          <h2 id="board-title">排行榜</h2>
-          <span class="muted small">平均誤差越小越前面 · 缺交的週次以該週最差誤差計 · ▲▼ 為與上週相比的名次變化</span>
+          <h2 id="board-title"></h2>
+          <span class="muted small" data-i18n="d.boardNote"></span>
         </div>
         <ol class="dash-board" id="board"></ol>
       </article>
@@ -57,8 +58,8 @@
     <section class="dash-row two">
       <article class="card">
         <div class="card-head">
-          <h2 id="asset-title">💰 模擬投資資產</h2>
-          <span class="muted small">起始資金 $10,000 · 不計入排名 · ▲▼ 為與上週相比的名次變化</span>
+          <h2 id="asset-title"></h2>
+          <span class="muted small" data-i18n="d.assetsNote"></span>
         </div>
         <ol class="dash-board" id="asset-board"></ol>
       </article>
@@ -66,11 +67,12 @@
     </section>
   </main>
 
-  <div class="dash-msg" id="msg">載入中…</div>
+  <div class="dash-msg" id="msg" data-i18n="d.loading">載入中…</div>
   <div class="tip" id="tip" hidden></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="config.js"></script>
+  <script src="i18n.js"></script>
   <script src="demo.js"></script>
   <script src="common.js"></script>
   <script src="dashboard.js"></script>

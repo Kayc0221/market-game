@@ -306,3 +306,17 @@ figcaption { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bott
 .pnl-bar span { position: absolute; top: 0; bottom: 0; }
 .pnl-bar span.gain { left: 50%; background: var(--up); border-radius: 0 4px 4px 0; }
 .pnl-bar span.loss { right: 50%; background: var(--down); border-radius: 4px 0 0 4px; }
+
+/* ---------- 中 / EN 切換 ---------- */
+.lang-toggle { display: inline-flex; border: 1px solid var(--axis); border-radius: 999px; padding: 2px; background: var(--surface); }
+.lang-toggle button { appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px; cursor: pointer; line-height: 1.2; }
+.lang-toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.lang-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-toggle.on-dark { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.08); }
+.lang-toggle.on-dark button { color: rgba(255,255,255,.8); }
+.lang-toggle.on-dark button[aria-pressed="true"] { background: #fff; color: var(--hero-1); }
+.lang-toggle.on-dark button:focus-visible { outline-color: #fff; }
+.login-card { position: relative; }
+.login-lang { position: absolute; top: 14px; right: 14px; }
+.hero-actions { display: flex; align-items: center; gap: 10px; }

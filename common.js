@@ -1,5 +1,6 @@
 // 學生頁與課堂看板共用的工具
 window.MPG = (() => {
+  const t = (k, v) => window.I18N.t(k, v);
   const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL || '').trim();
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -13,29 +14,31 @@ window.MPG = (() => {
   const signedMoney = (v, d = 0) => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const sameSign = (a, b) => (a > 0 && b > 0) || (a < 0 && b < 0) || (a === 0 && b === 0);
   const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : r;
-  const fmtDeadline = iso => new Date(iso).toLocaleString('zh-TW', {
+  const fmtDeadline = iso => new Date(iso).toLocaleString(window.I18N.locale(), {
     timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
   });
 
   async function api(body) {
-    if (!API_URL) return window.DemoAPI.handle(body);
+    if (!API_URL) {
+      try { return await window.DemoAPI.handle(body); } catch (e) { throw new Error(window.I18N.err(e.message)); }
+    }
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避免 CORS 預檢
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error('伺服器沒有回應（' + res.status + '）');
+    if (!res.ok) throw new Error(t('err.server', { s: res.status }));
     const out = await res.json();
-    if (!out.ok) throw new Error(out.error || '發生錯誤');
+    if (!out.ok) throw new Error(window.I18N.err(out.error || '發生錯誤'));
     return out;
   }
 
   function grade(err) {
     if (err == null) return null;
-    if (err < 0.5) return { name: '靶心', cls: 'bull', emoji: '🎯' };
-    if (err < 1) return { name: '內環', cls: '', emoji: '🟢' };
-    if (err < 2) return { name: '中環', cls: '', emoji: '🔵' };
-    return { name: '外環', cls: '', emoji: '⚪' };
+    if (err < 0.5) return { name: t('grade.bull'), cls: 'bull', emoji: '🎯' };
+    if (err < 1) return { name: t('grade.inner'), cls: '', emoji: '🟢' };
+    if (err < 2) return { name: t('grade.mid'), cls: '', emoji: '🔵' };
+    return { name: t('grade.outer'), cls: '', emoji: '⚪' };
   }
 
   function dirHits(p, w) {
@@ -65,14 +68,14 @@ window.MPG = (() => {
    * 點到中心的距離 = |dx| + |dy|（就是每週誤差），方向 = atan2(dy, dx)。
    */
   function renderTarget(el, points, opts = {}) {
-    const axes = opts.axes || ['S&P 猜高 ▶', '◀ 猜低', '▲ NASDAQ 猜高', '▼ NASDAQ 猜低'];
+    const axes = opts.axes || t('target.axes');
     const pts = points.map(p => ({ ...p, err: Math.abs(p.dx) + Math.abs(p.dy), ang: Math.atan2(p.dy, p.dx) }));
     const R = 150, rMax = Math.ceil(Math.max(opts.minRange || 2, ...pts.map(t => t.err)));
     const scale = R / rMax;
     const rings = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 15, 20].filter(v => v <= rMax);
     if (rings[rings.length - 1] !== rMax) rings.push(rMax);
     const ringFill = i => i === 0 ? css('--accent-wash') : (i % 2 ? css('--ring-1') : css('--ring-2'));
-    let svg = `<svg viewBox="-200 -185 400 370" role="img" aria-label="${esc(opts.label || '靶心圖')}">`;
+    let svg = `<svg viewBox="-235 -185 470 370" role="img" aria-label="${esc(opts.label || t('target.label'))}">`;
     for (let i = rings.length - 1; i >= 0; i--) {
       svg += `<circle r="${rings[i] * scale}" fill="${ringFill(i)}" stroke="${css('--grid')}" stroke-width="1"/>`;
     }
@@ -110,7 +113,7 @@ window.MPG = (() => {
         <circle cx="${x}" cy="${y}" r="${t.strong ? 7 : 5.5}" fill="${css(t.strong ? '--series-2' : opts.dim ? '--series-1' : '--series-2')}" stroke="${css('--surface')}" stroke-width="2"/>
         ${lp ? `<text class="t-pt-label" x="${x + lp[0]}" y="${y + lp[1]}">${esc(t.label)}</text>` : ''}</g>`;
     });
-    if (!pts.length) svg += `<text class="t-axis" x="0" y="${R * 0.55}" text-anchor="middle">${esc(opts.empty || '還沒有資料')}</text>`;
+    if (!pts.length) svg += `<text class="t-axis" x="0" y="${R * 0.55}" text-anchor="middle">${esc(opts.empty || t('target.empty'))}</text>`;
     svg += `</svg>`;
     el.innerHTML = svg;
 
@@ -134,16 +137,16 @@ window.MPG = (() => {
 
   /** 前三名卡片（含理由）。 */
   function podiumHtml(top, opts = {}) {
-    if (!top || !top.length) return `<p class="muted">${opts.empty || '這週還沒有結算的成績'}</p>`;
-    return `<ol class="podium">${top.map(t => `
-      <li class="podium-item r${t.rank}${opts.me && t.name === opts.me ? ' me' : ''}">
+    if (!top || !top.length) return `<p class="muted">${opts.empty || t('podium.empty')}</p>`;
+    return `<ol class="podium">${top.map(p => `
+      <li class="podium-item r${p.rank}${opts.me && p.name === opts.me ? ' me' : ''}">
         <div class="podium-head">
-          <span class="podium-medal" aria-label="第 ${t.rank} 名">${medal(t.rank)}</span>
-          <span class="podium-name">${esc(t.name)}</span>
-          <span class="podium-err">誤差 <b>${t.error.toFixed(2)}</b></span>
+          <span class="podium-medal" aria-label="${t('podium.rank', { n: p.rank })}">${medal(p.rank)}</span>
+          <span class="podium-name">${esc(p.name)}</span>
+          <span class="podium-err">${t('podium.err')} <b>${p.error.toFixed(2)}</b></span>
         </div>
-        <div class="podium-preds">S&amp;P <b class="${dirClass(t.spx)}">${signed(t.spx)}</b> · NASDAQ <b class="${dirClass(t.ixic)}">${signed(t.ixic)}</b></div>
-        <blockquote class="podium-why">${t.rationale ? esc(t.rationale) : '<span class="muted">（沒有填寫理由）</span>'}</blockquote>
+        <div class="podium-preds">S&amp;P <b class="${dirClass(p.spx)}">${signed(p.spx)}</b> · NASDAQ <b class="${dirClass(p.ixic)}">${signed(p.ixic)}</b></div>
+        <blockquote class="podium-why">${p.rationale ? esc(p.rationale) : `<span class="muted">${t('podium.noWhy')}</span>`}</blockquote>
       </li>`).join('')}</ol>`;
   }
 
