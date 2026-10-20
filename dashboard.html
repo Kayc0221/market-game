@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>課堂看板 · 華爾街預言家</title>
+  <meta name="description" content="16 週股市預測挑戰：每週結算結果、全班靶心、前三名與排行榜。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dash">
+  <header class="dash-bar">
+    <div class="dash-brand"><span aria-hidden="true">🎯</span> 華爾街預言家 <span class="muted">· 課堂看板</span></div>
+    <nav class="week-nav" aria-label="切換週次">
+      <button class="icon-btn" id="prev-week" aria-label="上一週">‹</button>
+      <select id="week-select" aria-label="選擇週次"></select>
+      <button class="icon-btn" id="next-week" aria-label="下一週">›</button>
+    </nav>
+    <div class="dash-actions">
+      <span class="muted small" id="updated"></span>
+      <button class="icon-btn" id="refresh" aria-label="重新整理" title="重新整理">↻</button>
+      <button class="icon-btn" id="theme" aria-label="切換深淺色" title="切換深淺色">◐</button>
+      <button class="icon-btn" id="fullscreen" aria-label="全螢幕" title="全螢幕（F）">⛶</button>
+    </div>
+  </header>
+
+  <main class="dash-main" id="dash" hidden>
+    <section class="dash-hero" id="hero"></section>
+
+    <section class="dash-row two">
+      <article class="card">
+        <div class="card-head">
+          <h2 id="target-title">全班靶心</h2>
+          <label class="toggle"><input type="checkbox" id="show-names"> 顯示所有姓名</label>
+        </div>
+        <p class="muted small" id="target-note"></p>
+        <div class="target-wrap dash-target" id="class-target"></div>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2 id="podium-title">本週前三名</h2></div>
+        <div id="podium" class="dash-podium"></div>
+      </article>
+    </section>
+
+    <section class="dash-row two">
+      <article class="card">
+        <div class="card-head">
+          <h2 id="board-title">排行榜</h2>
+          <span class="muted small">平均誤差越小越前面 · ▲▼ 為與上週相比的名次變化</span>
+        </div>
+        <ol class="dash-board" id="board"></ol>
+      </article>
+      <article class="card open-card" id="open-card"></article>
+    </section>
+  </main>
+
+  <div class="dash-msg" id="msg">載入中…</div>
+  <div class="tip" id="tip" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script src="demo.js"></script>
+  <script src="common.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

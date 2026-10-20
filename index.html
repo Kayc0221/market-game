@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>華爾街預言家</title>
+  <meta name="description" content="16 週股市預測挑戰：預測 S&P 500 與 NASDAQ 每週漲跌，看誰最準。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 登入 -->
+  <main id="login" class="login" hidden>
+    <div class="login-card">
+      <div class="login-emoji" aria-hidden="true">🎯</div>
+      <h1>華爾街預言家</h1>
+      <p class="muted">16 週股市預測挑戰 · 預測 S&amp;P 500 與 NASDAQ 每週漲跌，誤差越小排名越前面</p>
+      <form id="login-form" autocomplete="off">
+        <label for="sid">學號</label>
+        <input id="sid" name="sid" inputmode="text" placeholder="例如 114AB0001" required autofocus>
+        <label class="remember"><input type="checkbox" id="remember" checked> 在這台裝置記住我</label>
+        <button type="submit" class="btn primary" id="login-btn">開始挑戰</button>
+        <p class="error" id="login-error" role="alert"></p>
+      </form>
+      <p class="demo-hint" id="demo-hint" hidden>目前是<strong>示範模式</strong>（尚未連接試算表）。試試學號 <code>DEMO01</code>。</p>
+    </div>
+  </main>
+
+  <!-- 主畫面 -->
+  <div id="app" hidden>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="who">
+          <div class="avatar" id="avatar" aria-hidden="true"></div>
+          <div>
+            <div class="who-name" id="who-name"></div>
+            <div class="who-sub" id="who-sub"></div>
+          </div>
+        </div>
+        <div class="level">
+          <div class="level-row"><span class="level-name" id="level-name"></span><span class="level-xp" id="level-xp"></span></div>
+          <div class="xpbar" role="progressbar" aria-label="經驗值" id="xpbar"><span id="xpfill"></span></div>
+        </div>
+        <button class="btn ghost small" id="logout">登出</button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="grid-top">
+        <article class="card mission" id="mission"></article>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 id="podium-title">每週前三名</h2>
+          <span class="muted small">看看最準的同學怎麼想</span>
+        </div>
+        <div id="podium"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>預測 vs 實際</h2>
+          <div class="legend">
+            <span><i class="key line s1"></i>實際漲跌</span>
+            <span><i class="key dot s2"></i>我的預測</span>
+          </div>
+        </div>
+        <div class="multiples">
+          <figure><figcaption>S&amp;P 500 每週漲跌（週五收盤對週五收盤, %）</figcaption><div class="chart-box"><canvas id="chart-spx"></canvas></div></figure>
+          <figure><figcaption>NASDAQ 每週漲跌（週五收盤對週五收盤, %）</figcaption><div class="chart-box"><canvas id="chart-ixic"></canvas></div></figure>
+        </div>
+      </section>
+
+      <section class="grid-two">
+        <article class="card">
+          <div class="card-head">
+            <h2>我的靶心</h2>
+          </div>
+          <p class="muted small">每一週是一個點。<strong>離中心的距離 = 該週誤差</strong>；點偏向哪一邊，代表哪個指數猜太高或太低。</p>
+          <div class="target-wrap" id="target"></div>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <h2>名次變化</h2>
+          </div>
+          <p class="muted small">每週結算後，依全季累積平均誤差的排名。</p>
+          <div class="chart-box tall"><canvas id="chart-rank"></canvas></div>
+        </article>
+      </section>
+
+      <section class="grid-two">
+        <article class="card">
+          <div class="card-head">
+            <h2>排行榜</h2>
+            <div class="tabs" role="tablist" id="board-tabs">
+              <button role="tab" data-scope="1">R1</button>
+              <button role="tab" data-scope="2">R2</button>
+              <button role="tab" data-scope="all">全季</button>
+            </div>
+          </div>
+          <ol class="board" id="board"></ol>
+          <p class="muted small">名次依平均誤差（|S&amp;P 預測 − 實際| + |NASDAQ 預測 − 實際|）由小到大排列。</p>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <h2>成就徽章</h2>
+            <span class="muted small" id="badge-count"></span>
+          </div>
+          <ul class="badges" id="badges"></ul>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>我的預測紀錄</h2></div>
+        <div class="table-scroll">
+          <table class="records">
+            <thead>
+              <tr><th>週次</th><th>期間</th><th class="num">S&amp;P 預測</th><th class="num">S&amp;P 實際</th><th class="num">NASDAQ 預測</th><th class="num">NASDAQ 實際</th><th class="num">誤差</th><th>評等</th><th>理由</th></tr>
+            </thead>
+            <tbody id="records"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="loading" id="loading" hidden><div class="spinner"></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="tip" id="tip" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="demo.js"></script>
+  <script src="common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

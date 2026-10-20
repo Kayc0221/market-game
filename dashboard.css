@@ -1,0 +1,75 @@
+/* 課堂看板：投影用，字級隨螢幕寬度放大 */
+body.dash { font-size: clamp(15px, 0.55vw + 9px, 22px); }
+.dash .small { font-size: 0.8em; }
+.dash h2 { font-size: 1.15em; }
+
+.dash-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px 20px; background: linear-gradient(120deg, var(--hero-1), var(--hero-2)); color: #fff; }
+.dash-bar .muted { color: rgba(255,255,255,.7); }
+.dash-brand { font-weight: 700; font-size: 1.15em; flex: 1 1 auto; white-space: nowrap; }
+.week-nav { display: flex; align-items: center; gap: 6px; }
+.week-nav select { font: inherit; font-weight: 700; color: var(--ink); background: var(--surface); border: 0; border-radius: 10px; padding: 6px 10px; }
+.dash-actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn { appearance: none; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff;
+  width: 2.1em; height: 2.1em; border-radius: 10px; font-size: 1em; line-height: 1; cursor: pointer; }
+.icon-btn:hover { background: rgba(255,255,255,.18); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+.icon-btn:focus-visible, .week-nav select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.dash-main { max-width: 1800px; margin: 0 auto; padding: 18px 20px 40px; display: grid; gap: 18px; }
+.dash .card { padding: 1.1em 1.2em; }
+.dash-row.two { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; }
+.dash-row.two:last-child { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+@media (max-width: 1000px) { .dash-row.two, .dash-row.two:last-child { grid-template-columns: minmax(0, 1fr); } }
+.dash-msg { text-align: center; padding: 80px 20px; color: var(--ink-2); font-size: 1.1em; }
+
+/* ---------- 頂部三張卡 ---------- */
+.dash-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 860px) { .dash-hero { grid-template-columns: minmax(0, 1fr); } }
+.hero-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 1em 1.2em; box-shadow: var(--shadow); }
+.hero-label { font-weight: 700; color: var(--ink-2); display: flex; justify-content: space-between; gap: 8px; }
+.hero-value { font-size: 3em; font-weight: 700; line-height: 1.15; margin: 4px 0 2px; }
+.hero-value.wait { font-size: 1.8em; color: var(--ink-2); padding: .35em 0; }
+.hero-sub { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hero-stats { display: flex; gap: 1.4em; margin-top: .7em; padding-top: .6em; border-top: 1px solid var(--grid); flex-wrap: wrap; }
+.hero-stats div { font-size: .85em; color: var(--ink-2); }
+.hero-stats b { display: block; font-size: 1.35em; color: var(--ink); }
+
+/* ---------- 靶心 ---------- */
+.toggle { font-size: .8em; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.dash-target svg { max-width: 640px; }
+
+/* ---------- 前三名 ---------- */
+.dash-podium .podium { grid-template-columns: minmax(0, 1fr); gap: .8em; }
+.dash-podium .podium-item { padding: .9em 1.1em; }
+.dash-podium .podium-medal { font-size: 1.8em; }
+.dash-podium .podium-name { font-size: 1.25em; }
+.dash-podium .podium-err, .dash-podium .podium-preds { font-size: .85em; }
+.dash-podium .podium-why { font-size: 1em; }
+
+/* ---------- 排行榜 ---------- */
+.dash-board { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 8), auto); grid-auto-flow: column; gap: 4px 20px; }
+@media (max-width: 700px) { .dash-board { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; } }
+.dash-board li { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto 2.8em; align-items: center; gap: .6em; padding: .4em .5em; border-radius: 10px; }
+.dash-board li:nth-child(-n+3) { background: var(--surface-2); }
+.dash-board .rk { text-align: center; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dash-board .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-board .val { font-variant-numeric: tabular-nums; text-align: right; }
+.dash-board .val small { color: var(--muted); font-size: .75em; margin-left: 4px; }
+.dash-board .mv { font-size: .8em; font-weight: 700; text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dash-board .mv.same { color: var(--muted); font-weight: 400; }
+.dash-board li.none { color: var(--muted); }
+.dash-board li.none .nm { font-weight: 400; }
+
+/* ---------- 本週進行中 ---------- */
+.open-card { display: flex; flex-direction: column; gap: .6em; }
+.open-body { display: flex; gap: 1.2em; align-items: center; flex-wrap: wrap; }
+.open-info { flex: 1 1 220px; min-width: 0; }
+.open-count { font-size: 2.6em; font-weight: 700; line-height: 1.1; }
+.open-count small { font-size: .45em; color: var(--ink-2); font-weight: 600; }
+.progress { height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin: .5em 0; }
+.progress span { display: block; height: 100%; background: var(--series-1); border-radius: 99px; }
+.qr { background: #fff; padding: 10px; border-radius: 12px; line-height: 0; flex: none; }
+.qr img, .qr canvas { width: 9em !important; height: 9em !important; }
+.open-url { font-size: .8em; color: var(--ink-2); word-break: break-all; }
