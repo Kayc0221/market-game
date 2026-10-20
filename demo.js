@@ -21,6 +21,7 @@ window.DemoAPI = (() => {
   let seed = 7;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const r2 = v => Math.round(v * 20) / 20;
+  const TRADING = { startingCash: 10000, startWeek: 7, maxExposure: 100, autoWeight: 50 };
   const deadlineFor = end => new Date(new Date(end + 'T00:00:00+08:00').getTime() - 86400000 + 20 * 3600000);
 
   const market = DATES.map((date, i) => ({ date, spx: CLOSES[i] ? CLOSES[i][0] : null, ixic: CLOSES[i] ? CLOSES[i][1] : null }));
@@ -36,7 +37,31 @@ window.DemoAPI = (() => {
     }
   });
   // 本週（第 7 週）已經有幾位同學先交了
-  ROSTER.slice(1, 7).forEach(([, name]) => preds.push({ week: 7, name, spx: r2((rand() - 0.5) * 2), ixic: r2((rand() - 0.5) * 3), rationale: '' }));
+  ROSTER.slice(1, 7).forEach(([, name], i) => preds.push({ week: 7, name, spx: r2((rand() - 0.5) * 2), ixic: r2((rand() - 0.5) * 3), rationale: '',
+    ...(i % 2 ? { wSpx: 60, wIxic: -40 } : {}) }));
+
+  // 與 Code.gs 的 allocation_ / portfolio_ 相同
+  function allocation(p, week) {
+    if (!p || p.spx == null || p.ixic == null) return { wSpx: 0, wIxic: 0, source: 'cash' };
+    if (week >= TRADING.startWeek && p.wSpx != null && p.wIxic != null) return { wSpx: p.wSpx, wIxic: p.wIxic, source: 'manual' };
+    return { wSpx: Math.sign(p.spx) * TRADING.autoWeight, wIxic: Math.sign(p.ixic) * TRADING.autoWeight, source: 'auto' };
+  }
+  function portfolio(weeks, name) {
+    let equity = TRADING.startingCash;
+    const rows = [];
+    for (const w of weeks) {
+      if (w.status === 'upcoming') break;
+      const a = allocation(preds.find(p => p.name === name && p.week === w.week), w.week);
+      const row = { week: w.week, status: w.status, ...a, start: equity, end: null, pnl: null, ret: null };
+      if (w.status !== 'settled') { rows.push(row); break; }
+      const ret = (a.wSpx * w.spx + a.wIxic * w.ixic) / 100;
+      const end = equity * (1 + ret / 100);
+      Object.assign(row, { end, pnl: end - equity, ret });
+      rows.push(row);
+      equity = end;
+    }
+    return { rows, equity, totalReturn: (equity / TRADING.startingCash - 1) * 100 };
+  }
 
   function game() {
     const now = new Date();
@@ -57,7 +82,8 @@ window.DemoAPI = (() => {
       const w = byWeek[p.week];
       return { ...p, error: w && w.status === 'settled' ? Math.abs(p.spx - w.spx) + Math.abs(p.ixic - w.ixic) : null };
     });
-    const board = ROSTER.map(([, name]) => ({ name, errors: {}, submitted: [] }));
+    const board = ROSTER.map(([, name]) => ({ name, errors: {}, submitted: [],
+      assets: Object.fromEntries(portfolio(weeks, name).rows.filter(r => r.end != null).map(r => [r.week, r.end])) }));
     scored.forEach(p => {
       const b = board.find(b => b.name === p.name);
       b.submitted.push(p.week);
@@ -81,9 +107,10 @@ window.DemoAPI = (() => {
 
   function student(s) {
     const g = game();
-    const me = g.scored.filter(p => p.name === s.name).map(({ week, spx, ixic, rationale, error }) => ({ week, spx, ixic, rationale, error }));
+    const me = g.scored.filter(p => p.name === s.name).map(({ week, spx, ixic, rationale, error, wSpx, wIxic }) =>
+      ({ week, spx, ixic, rationale, error, wSpx: wSpx ?? null, wIxic: wIxic ?? null }));
     return { ok: true, now: g.now.toISOString(), student: s, weeks: g.weeks, openWeek: g.openWeek, roundSplit: 8, maxAbsPred: 20,
-      me, board: g.board, highlights: g.highlights };
+      me, board: g.board, highlights: g.highlights, trading: TRADING, portfolio: portfolio(g.weeks, s.name) };
   }
 
   function dashboard() {
@@ -94,6 +121,7 @@ window.DemoAPI = (() => {
     });
     return { ok: true, now: g.now.toISOString(), weeks: g.weeks, openWeek: g.openWeek, roundSplit: 8, board: g.board,
       highlights: g.highlights, weekPreds,
+      trading: TRADING,
       openStats: { week: g.openWeek, submitted: new Set(g.scored.filter(p => p.week === g.openWeek).map(p => p.name)).size, total: ROSTER.length } };
   }
 
@@ -109,7 +137,14 @@ window.DemoAPI = (() => {
         if (!isFinite(spx) || !isFinite(ixic)) throw new Error('請填入 S&P 500 與 NASDAQ 的預測漲跌幅');
         if (Math.abs(spx) > 20 || Math.abs(ixic) > 20) throw new Error('預測值需介於 ±20% 之間');
         const i = preds.findIndex(p => p.week === body.week && p.name === s.name);
-        const entry = { week: body.week, name: s.name, spx, ixic, rationale: String(body.rationale || '').trim() };
+        const num = v => v === '' || v == null ? null : parseFloat(v);
+        const wSpx = num(body.wSpx), wIxic = num(body.wIxic);
+        if (wSpx != null || wIxic != null) {
+          if (body.week < TRADING.startWeek) throw new Error(`第 ${TRADING.startWeek} 週起才能自己設定部位`);
+          if (Math.abs(wSpx || 0) + Math.abs(wIxic || 0) > TRADING.maxExposure) throw new Error('兩個部位的絕對值加總不能超過總資產的 100%');
+        }
+        const entry = { week: body.week, name: s.name, spx, ixic, rationale: String(body.rationale || '').trim(),
+          ...(wSpx != null || wIxic != null ? { wSpx: wSpx || 0, wIxic: wIxic || 0 } : {}) };
         if (i >= 0) preds[i] = entry; else preds.push(entry);
         return { ...student(s), saved: { week: body.week, spx, ixic } };
       }

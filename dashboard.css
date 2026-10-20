@@ -73,3 +73,14 @@ body.dash { font-size: clamp(15px, 0.55vw + 9px, 22px); }
 .qr { background: #fff; padding: 10px; border-radius: 12px; line-height: 0; flex: none; }
 .qr img, .qr canvas { width: 9em !important; height: 9em !important; }
 .open-url { font-size: .8em; color: var(--ink-2); word-break: break-all; }
+
+/* ---------- 模擬投資 ---------- */
+.invest-stats { border-top: 0; margin-top: 0; padding-top: 0; }
+.invest-top { list-style: none; margin: 1em 0 .6em; padding: 0; display: grid; gap: .4em; }
+.invest-top li { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto auto; gap: .6em; align-items: center;
+  background: var(--surface-2); border-radius: 10px; padding: .45em .7em; font-variant-numeric: tabular-nums; }
+.invest-top .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.invest-top .muted { font-size: .85em; }
+.dash-board li { grid-template-columns: 2.2em minmax(4.5em, 1fr) auto 2.8em; }
+.dash-board .val { line-height: 1.2; }
+.dash-board .val small { display: block; margin-left: 0; white-space: nowrap; }

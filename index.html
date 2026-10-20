@@ -59,6 +59,36 @@
         <div id="podium"></div>
       </section>
 
+      <section class="card" id="portfolio-card" hidden>
+        <div class="card-head">
+          <h2>💰 模擬投資</h2>
+          <span class="muted small">把預測變成部位，看看猜對能賺多少（不計入排名）</span>
+        </div>
+        <div class="pf-top">
+          <div class="pf-hero">
+            <div class="tile-label">總資產</div>
+            <div class="pf-value" id="pf-equity"></div>
+            <div class="pf-ret" id="pf-ret"></div>
+          </div>
+          <div class="pf-stats" id="pf-stats"></div>
+        </div>
+        <div class="legend pf-legend">
+          <span><i class="key line s2"></i>我的資產</span>
+          <span><i class="key line s1"></i>一開始全買 S&amp;P 500</span>
+          <span><i class="key line s3"></i>一開始全買 NASDAQ</span>
+        </div>
+        <div class="chart-box"><canvas id="chart-assets"></canvas></div>
+        <details class="pf-details">
+          <summary>每週部位與損益</summary>
+          <div class="table-scroll">
+            <table class="records">
+              <thead><tr><th>週次</th><th>配置</th><th class="num">S&amp;P 500</th><th class="num">NASDAQ</th><th class="num">週初資產</th><th class="num">損益</th><th class="num">報酬</th><th class="num">週末資產</th></tr></thead>
+              <tbody id="pf-rows"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
       <section class="card">
         <div class="card-head">
           <h2>預測 vs 實際</h2>
@@ -85,7 +115,7 @@
           <div class="card-head">
             <h2>名次變化</h2>
           </div>
-          <p class="muted small">每週結算後，依全季累積平均誤差的排名。</p>
+          <p class="muted small">每週結算後，依全季累積平均誤差（含缺交懲罰）的排名。</p>
           <div class="chart-box tall"><canvas id="chart-rank"></canvas></div>
         </article>
       </section>
@@ -98,10 +128,11 @@
               <button role="tab" data-scope="1">R1</button>
               <button role="tab" data-scope="2">R2</button>
               <button role="tab" data-scope="all">全季</button>
+              <button role="tab" data-scope="assets">💰 資產</button>
             </div>
           </div>
           <ol class="board" id="board"></ol>
-          <p class="muted small">名次依平均誤差（|S&amp;P 預測 − 實際| + |NASDAQ 預測 − 實際|）由小到大排列。</p>
+          <p class="muted small" id="board-note"></p>
         </article>
         <article class="card">
           <div class="card-head">

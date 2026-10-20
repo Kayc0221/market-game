@@ -9,6 +9,8 @@ window.MPG = (() => {
   const arrow = v => v > 0 ? '▲' : v < 0 ? '▼' : '';
   const md = s => { const [, m, d] = s.split('-'); return `${+m}/${+d}`; };
   const price = v => v == null ? '—' : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = (v, d = 0) => v == null ? '—' : (v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const signedMoney = (v, d = 0) => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const sameSign = (a, b) => (a > 0 && b > 0) || (a < 0 && b < 0) || (a === 0 && b === 0);
   const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : r;
   const fmtDeadline = iso => new Date(iso).toLocaleString('zh-TW', {
@@ -41,11 +43,17 @@ window.MPG = (() => {
     return (sameSign(p.spx, w.spx) ? 1 : 0) + (sameSign(p.ixic, w.ixic) ? 1 : 0);
   }
 
-  /** 依平均誤差排名；filter(week) 決定納入哪些週。同分並列。 */
+  /**
+   * 依平均誤差排名；filter(week) 決定納入哪些週。同分並列。
+   * 缺交懲罰：有人交的週次，沒交（或只填一個指數）的同學以該週全班最差誤差計。
+   */
   function standings(board, filter) {
+    const weeks = [...new Set(board.flatMap(b => Object.keys(b.errors).map(Number)))].filter(filter);
+    const worst = Object.fromEntries(weeks.map(w => [w, Math.max(...board.map(b => b.errors[w]).filter(e => e != null))]));
     const rows = board.map(b => {
-      const errs = Object.entries(b.errors).filter(([wk]) => filter(+wk)).map(([, e]) => e);
-      return { name: b.name, n: errs.length, avg: errs.length ? errs.reduce((a, c) => a + c, 0) / errs.length : null };
+      const errs = weeks.map(w => b.errors[w] != null ? b.errors[w] : worst[w]);
+      const n = weeks.filter(w => b.errors[w] != null).length;
+      return { name: b.name, n, missed: weeks.length - n, avg: errs.length ? errs.reduce((a, c) => a + c, 0) / errs.length : null };
     });
     const ranked = rows.filter(r => r.avg != null).sort((a, b) => a.avg - b.avg);
     ranked.forEach(r => { r.rank = 1 + ranked.filter(o => o.avg < r.avg - 1e-9).length; });
@@ -158,5 +166,13 @@ window.MPG = (() => {
     };
   }
 
-  return { API_URL, api, esc, css, signed, dirClass, arrow, md, price, sameSign, medal, fmtDeadline, grade, dirHits, standings, renderTarget, podiumHtml, chartOptions };
+  /** 資產排名：依某一週結算後的總資產由高到低。 */
+  function assetStandings(board, week) {
+    const rows = board.filter(b => b.assets && b.assets[week] != null).map(b => ({ name: b.name, equity: b.assets[week] }));
+    rows.sort((a, b) => b.equity - a.equity);
+    rows.forEach(r => { r.rank = 1 + rows.filter(o => o.equity > r.equity + 1e-6).length; });
+    return rows;
+  }
+
+  return { API_URL, api, esc, css, signed, dirClass, arrow, md, price, money, signedMoney, assetStandings, sameSign, medal, fmtDeadline, grade, dirHits, standings, renderTarget, podiumHtml, chartOptions };
 })();

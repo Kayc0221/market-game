@@ -1,5 +1,5 @@
 (() => {
-  const { API_URL, api, esc, signed, dirClass, arrow, md, price, sameSign, medal, fmtDeadline, standings, renderTarget, podiumHtml } = window.MPG;
+  const { API_URL, api, esc, signed, dirClass, arrow, md, price, money, signedMoney, assetStandings, sameSign, medal, fmtDeadline, standings, renderTarget, podiumHtml } = window.MPG;
   const $ = id => document.getElementById(id);
   const THEME_KEY = 'mpg.dashTheme';
   const REFRESH_MS = 5 * 60 * 1000;
@@ -42,13 +42,14 @@
     renderOpen();
     if (week == null) {
       $('hero').innerHTML = '<div class="hero-card"><div class="hero-value wait">賽季還沒有結算的週次</div></div>';
-      ['class-target', 'podium', 'board'].forEach(id => { $(id).innerHTML = ''; });
+      ['class-target', 'podium', 'board', 'asset-board', 'invest-card'].forEach(id => { $(id).innerHTML = ''; });
       return;
     }
     renderHero();
     renderClassTarget();
     renderPodium();
     renderBoard();
+    renderAssets();
   }
 
   function renderNav() {
@@ -136,7 +137,7 @@
 
   function renderPodium() {
     const w = wk(week);
-    $('podium-title').textContent = `第 ${w.week} 週前三名`;
+    $('podium-title').textContent = `第 ${w.week} 週預測最準前三名`;
     $('podium').innerHTML = w.status === 'settled'
       ? podiumHtml(data.highlights[week], { empty: '這週沒有完整提交的預測' })
       : '<p class="muted">週五收盤後就會公布前三名和他們的理由。</p>';
@@ -161,8 +162,51 @@
     $('board').style.setProperty('--rows', Math.ceil(rows / 2));
     $('board').innerHTML = now.ranked.map(r => `<li>
         <span class="rk">${medal(r.rank)}</span><span class="nm">${esc(r.name)}</span>
-        <span class="val"><b>${r.avg.toFixed(2)}</b><small>${r.n} 週</small></span>${move(r) || '<span></span>'}</li>`).join('')
+        <span class="val"><b>${r.avg.toFixed(2)}</b><small>${r.n} 週${r.missed ? ` · 缺 ${r.missed}` : ''}</small></span>${move(r) || '<span></span>'}</li>`).join('')
       + now.unranked.map(r => `<li class="none"><span class="rk">–</span><span class="nm">${esc(r.name)}</span><span class="val">尚無成績</span><span></span></li>`).join('');
+  }
+
+  /** 資產排行榜與本週投資表現（以選擇的週次，或它之前最近一個已結算週為準）。 */
+  function renderAssets() {
+    const t = data.trading;
+    const board = $('asset-board'), card = $('invest-card');
+    if (!t || !data.board.some(b => b.assets && Object.keys(b.assets).length)) {
+      board.innerHTML = '<li class="none"><span></span><span class="nm">結算後就會有資產排名</span></li>';
+      card.innerHTML = '';
+      return;
+    }
+    const settled = data.weeks.filter(x => x.status === 'settled' && x.week <= week);
+    const at = settled.length ? settled[settled.length - 1].week : null;
+    if (at == null) { board.innerHTML = ''; card.innerHTML = ''; return; }
+    const prev = settled.length > 1 ? settled[settled.length - 2].week : null;
+    const now = assetStandings(data.board, at);
+    const before = prev ? assetStandings(data.board, prev) : null;
+    const startOf = name => { const b = data.board.find(x => x.name === name); return prev ? b.assets[prev] : t.startingCash; };
+    $('asset-title').textContent = `💰 模擬投資資產（第 ${at} 週結算後）`;
+    board.style.setProperty('--rows', Math.ceil(now.length / 2));
+    board.innerHTML = now.map(r => {
+      const p = before && before.find(x => x.name === r.name);
+      const d = p ? p.rank - r.rank : 0;
+      const mv = !before ? '<span></span>' : d > 0 ? `<span class="mv">▲${d}</span>` : d < 0 ? `<span class="mv">▼${-d}</span>` : '<span class="mv same">–</span>';
+      const total = (r.equity / t.startingCash - 1) * 100;
+      return `<li><span class="rk">${medal(r.rank)}</span><span class="nm">${esc(r.name)}</span>
+        <span class="val"><b>${money(r.equity)}</b><small class="${dirClass(total)}">${signed(total, 1)}</small></span>${mv}</li>`;
+    }).join('');
+
+    // 本週報酬：這週誰賺最多
+    const weekly = now.map(r => ({ name: r.name, pnl: r.equity - startOf(r.name), ret: (r.equity / startOf(r.name) - 1) * 100 }))
+      .sort((a, b) => b.ret - a.ret);
+    const winners = weekly.filter(x => x.pnl > 0.005).length, losers = weekly.filter(x => x.pnl < -0.005).length;
+    const avgEq = now.reduce((a, r) => a + r.equity, 0) / now.length;
+    card.innerHTML = `
+      <div class="card-head"><h2>第 ${at} 週投資表現</h2></div>
+      <div class="hero-stats invest-stats">
+        <div>賺錢 / 賠錢<b><span class="up-text">${winners}</span> / <span class="down-text">${losers}</span> 人</b></div>
+        <div>全班平均資產<b>${money(avgEq)}</b></div>
+      </div>
+      <ol class="invest-top">${weekly.slice(0, 3).map((x, i) => `<li><span>${medal(i + 1)}</span><span class="nm">${esc(x.name)}</span>
+        <b class="${dirClass(x.ret)}">${signed(x.ret)}</b><span class="muted">${signedMoney(x.pnl)}</span></li>`).join('')}</ol>
+      <p class="muted small">沒有自己設定部位的同學，依預測方向每個指數配置 ${t.autoWeight}%；沒交預測的週次持有現金。</p>`;
   }
 
   function renderOpen() {
